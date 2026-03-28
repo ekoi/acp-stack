@@ -1,0 +1,19 @@
+[default]
+swh_delay_polling = 120
+swh_delay_polling_sword = 30
+swh_api_max_retries = 25
+data_tmp_base_dir_sword = "@format {env[BASE_DIR]}/data/tmp/sword"
+
+
+
+[default.keycloak_faircore4eosc_dev]
+    url="http://localhost:9090"
+    realms="faircore4eosc"
+    client_id="faircore4eosc-auth"
+
+[default.keycloak_faircore4eosc_demo]
+    url="https://keycloak.dansdemo.nl"
+    realms="faircore4eosc"
+    client_id="faircore4eosc-auth"
+
+
