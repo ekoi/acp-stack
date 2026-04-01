@@ -216,6 +216,29 @@ services:
       - acp-network
     restart: unless-stopped
 
+  locust:
+    image: locustio/locust:latest
+    container_name: acp_locust
+    ports:
+      - "8089:8089"   # Locust web UI
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py:ro
+    command: -f /mnt/locust/locustfile.py
+    environment:
+      ACA_HOST: "http://aca:2810"
+      MTS_HOST: "http://mts:1745"
+      ACP_HOST: "http://acp:10124"
+    depends_on:
+      acp:
+        condition: service_healthy
+      aca:
+        condition: service_healthy
+      mts:
+        condition: service_healthy
+    networks:
+      - acp-network
+#    restart: unless-stopped
+
 networks:
   acp-network:
     name: acp-network

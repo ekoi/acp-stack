@@ -72,6 +72,90 @@ cd /Users/akmi/dev/work/dans/acp-stack/docker
 docker compose -f docker-compose-full-stack.yaml down -v
 ```
 
+## Load testing with Locust
+
+The stack includes a [Locust](https://locust.io/) container for load/stress testing all three core services (ACA, MTS, ACP).
+
+### Locustfile
+
+`docker/locustfile.py` defines three user classes, one per service:
+
+| User class | Target service | Simulated endpoints |
+|---|---|---|
+| `ACAUser` | `aca` (`http://aca:2810`) | `GET /info`, `GET /repositories`, `GET /metrics` |
+| `MTSUser` | `mts` (`http://mts:1745`) | `GET /info`, `GET /saved-xsl-list-only`, `GET /saved-xsl-list?xslt_name`, `GET /metrics` |
+| `ACPUser` | `acp` (`http://acp:10124`) | `GET /`, `GET /available-plugins`, `GET /metrics` |
+
+Each class uses a random wait time between **0.5 – 2 s** between requests, and individual endpoints are weighted with Locust `@task` weights.
+
+### Locust container
+
+The `locust` service in `docker-compose-full-stack.yaml` starts automatically **after** `acp`, `aca`, and `mts` are healthy. Key settings:
+
+```yaml
+locust:
+  image: locustio/locust:latest
+  container_name: acp_locust
+  ports:
+    - "8089:8089"   # Locust web UI
+  volumes:
+    - ./locustfile.py:/mnt/locust/locustfile.py:ro
+  command: -f /mnt/locust/locustfile.py
+  environment:
+    ACA_HOST: "http://aca:2810"
+    MTS_HOST: "http://mts:1745"
+    ACP_HOST: "http://acp:10124"
+```
+
+> The `restart` directive is intentionally commented out so Locust does not keep restarting after a test run finishes.
+
+### Running a load test
+
+#### Option A — Locust web UI (recommended)
+
+1. Start the full stack (Locust starts together with it):
+   ```bash
+   cd /Users/akmi/dev/work/dans/acp-stack/docker
+   docker compose -f docker-compose-full-stack.yaml up -d --build
+   ```
+2. Open the Locust web UI at **`http://localhost:8089`**.
+3. Set the number of users, spawn rate, and click **Start swarming**.
+
+#### Option B — Headless / CI mode
+
+Run Locust without the web UI by overriding the command:
+
+```bash
+cd /Users/akmi/dev/work/dans/acp-stack/docker
+docker compose -f docker-compose-full-stack.yaml run --rm locust \
+  -f /mnt/locust/locustfile.py \
+  --headless \
+  --users 50 \
+  --spawn-rate 5 \
+  --run-time 2m \
+  --host http://acp:10124
+```
+
+#### Option C — Run locally against the live stack
+
+You can run Locust directly on your machine against the already-running stack:
+
+```bash
+# Install locust if needed
+pip install locust
+
+# Run from the repo root
+locust -f docker/locustfile.py \
+  --headless \
+  --users 20 \
+  --spawn-rate 2 \
+  --run-time 1m
+```
+
+The environment variables `ACA_HOST`, `MTS_HOST`, and `ACP_HOST` default to the local ports (`http://localhost:2810`, `http://localhost:1745`, `http://localhost:10124`) when not set.
+
+---
+
 ## Notes
 
 - The stack uses `docker/scripts/bootstrap-secrets.sh` to ensure `conf/.secrets.toml` exists (copied from `.secrets.toml.example` when missing).
