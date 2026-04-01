@@ -1,0 +1,25 @@
+# Tempo Configuration
+server:
+  http_listen_port: 3200
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+exporters:
+  logs:
+    endpoint: http://loki:3100/loki/api/v1/push
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/traces
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [logs]
