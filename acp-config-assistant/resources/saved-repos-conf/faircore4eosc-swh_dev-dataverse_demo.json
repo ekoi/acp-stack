@@ -26,12 +26,12 @@
             "metadata": {
                 "transformed-metadata": [
                     {
-                        "transformer-url": "http://localhost:1745/transform/faircore4eosc-form-metadata-to-dataverse-dataset-v1.xsl",
+                        "transformer-url": "http://mts:1745/transform/faircore4eosc-form-metadata-to-dataverse-dataset-v1.xsl",
                         "name": "dataset-metadata.json",
                         "dir": "metadata"
                     },
                     {
-                        "transformer-url": "http://localhost:1745/transform/faircore4eosc-form-metadata-to-dataverse-file-v1.xsl",
+                        "transformer-url": "http://mts:1745/transform/faircore4eosc-form-metadata-to-dataverse-file-v1.xsl",
                         "name": "dataset-files.json",
                         "dir": "metadata"
                     }
@@ -54,7 +54,7 @@
             "metadata": {
                 "transformed-metadata": [
                     {
-                        "transformer-url": "http://localhost:1745/transform/faircore4eosc-form-metadata-to-swd-sword-v1.xsl",
+                        "transformer-url": "http://mts:1745/transform/faircore4eosc-form-metadata-to-swd-sword-v1.xsl",
                         "name": "form-metadata-sword"
                     }
                 ]

@@ -1,0 +1,224 @@
+services:
+  mts:
+    build:
+      context: ../metadata-transformation-service
+      dockerfile: Dockerfile
+    container_name: metadata_transformation_service
+    ports:
+      - "1745:1745"
+    volumes:
+      - acp-data:/shared
+      - ../metadata-transformation-service/resources:/home/akmi/mts/resources
+      - ../metadata-transformation-service/conf:/home/akmi/mts/conf
+      - ./logs:/home/akmi/mts/logs
+      - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
+    networks:
+      - acp-network
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:1745/info"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    environment:
+      APP_NAME: "Metadata Transformation Service"
+      OTLP_GRPC_ENDPOINT: "http://tempo:4317"
+    command: >
+      sh -c 'sh /usr/local/bin/bootstrap-secrets.sh mts /home/akmi/mts/conf && exec python -m src.main'
+
+  aca:
+    build:
+      context: ../acp-config-assistant
+      dockerfile: Dockerfile
+    container_name: acp_config_assistant
+    ports:
+      - "2810:2810"
+    volumes:
+      - acp-data:/shared
+      - ../acp-config-assistant/resources:/home/akmi/aca/resources
+      - ../acp-config-assistant/conf:/home/akmi/aca/conf
+      - ./logs:/home/akmi/aca/logs
+      - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
+    networks:
+      - acp-network
+    depends_on:
+      mts:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:2810/info"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    environment:
+      APP_NAME: "ACP Config Assistant"
+      OTLP_GRPC_ENDPOINT: "http://tempo:4317"
+      MTS_HOST: "mts"
+    command: >
+      sh -c 'sh /usr/local/bin/bootstrap-secrets.sh aca /home/akmi/aca/conf && exec python -m src.main'
+
+  acp:
+    build:
+      context: ../automated-curation-platform
+      dockerfile: Dockerfile
+    container_name: automated_curation_platform
+    environment:
+      EXPOSE_PORT: 10124
+      APP_NAME: "Automated Curation Platform"
+      OTLP_GRPC_ENDPOINT: "http://tempo:4317"
+      PYTHONPATH: "/home/akmi/acp/src"
+      BASE_DIR: "/home/akmi/acp"
+      DB_URL: "acp:akmi2004@acp_postgres:5432"
+      DYNACONF_DB_URL: "acp:akmi2004@acp_postgres:5432"
+      DYNACONF_ASSISTANT_CONFIG_URL: "http://aca:2810"
+      DYNACONF_TRANSFORMER_URL: "http://mts:1745/transform"
+      DYNACONF_SMTP_SERVER: "maildev"
+    ports:
+      - "10124:10124"
+    volumes:
+      - ../automated-curation-platform/src:/home/akmi/acp/src
+      - ../automated-curation-platform/data:/home/akmi/acp/data
+      - ../automated-curation-platform/conf:/home/akmi/acp/conf
+      - ../automated-curation-platform/resources:/home/akmi/acp/resources:ro
+      - ./logs:/home/akmi/acp/logs
+      - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
+    networks:
+      - acp-network
+    depends_on:
+      acp_postgres:
+        condition: service_healthy
+      aca:
+        condition: service_healthy
+      mts:
+        condition: service_healthy
+      maildev:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:10124/" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: >
+      sh -c 'sh /usr/local/bin/bootstrap-secrets.sh acp /home/akmi/acp/conf && exec python -m src.main'
+
+
+  acp_postgres:
+    image: postgres:16
+    restart: unless-stopped
+    container_name: acp_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=acp
+      - POSTGRES_PASSWORD=akmi2004
+      - POSTGRES_DB=acp_db
+    volumes:
+      - ./data/db/acp-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acp -d acp_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - acp-network
+
+  loki:
+    image: grafana/loki:3.3.2
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - acp-data:/shared
+    networks:
+      - acp-network
+
+  prometheus:
+    image: prom/prometheus:v3.0.1
+    container_name: prometheus
+    ports:
+      - "9191:9191"
+    volumes:
+      - acp-data:/shared
+      - ./otlp-resources/monitors/etc/prometheus:/workspace
+    command:
+      - --config.file=/workspace/prometheus.yml
+      - --enable-feature=exemplar-storage
+      - "--web.listen-address=:9191"
+    depends_on:
+      - loki
+    networks:
+      - acp-network
+
+  tempo:
+    image: grafana/tempo:2.6.1-amd64
+    container_name: tempo
+    command: [ "--target=all", "--storage.trace.backend=local", "--storage.trace.local.path=/var/tempo", "--auth.enabled=false", "--server.http-listen-port=3200" ]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "3200:3200"
+    volumes:
+      - acp-data:/shared
+    depends_on:
+      - loki
+    networks:
+      - acp-network
+
+  promtail:
+    image: grafana/promtail:3.3.2
+    container_name: promtail
+    volumes:
+      - acp-data:/shared
+      - ./logs:/acp-logs:ro
+      - ./otlp-resources/monitors/promtail/promtail-config.yaml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+      - aca
+      - mts
+      - acp
+    networks:
+      - acp-network
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin1
+    volumes:
+      - acp-data:/shared
+      - ./otlp-resources/monitors/etc/grafana:/etc/grafana/provisioning/datasources
+      - ./otlp-resources/monitors/etc/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./otlp-resources/monitors/etc/dashboards:/etc/grafana/dashboards
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+      - promtail
+    networks:
+      - acp-network
+
+  maildev:
+    image: maildev/maildev:latest
+    container_name: acp_maildev
+    ports:
+      - "1080:1080"   # Web UI
+      - "1025:1025"   # SMTP
+    networks:
+      - acp-network
+    restart: unless-stopped
+
+networks:
+  acp-network:
+    name: acp-network
+
+volumes:
+  acp-data:

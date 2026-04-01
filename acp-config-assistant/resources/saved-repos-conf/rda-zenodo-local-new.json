@@ -17,12 +17,12 @@
                 "specification": [],
                 "transformed-metadata": [
                     {
-                        "transformer-url": "http://localhost:1745/transform/rda-form-metadata-to-zenodo-dataset-v1.xsl",
+                        "transformer-url": "http://mts:1745/transform/rda-form-metadata-to-zenodo-dataset-v1.xsl",
                         "name": "zenodo-dataset.json",
                         "dir": ""
                     },
                     {
-                        "transformer-url": "http://localhost:1745/transform/form-metadata-to-dataverse-file-v1.xsl",
+                        "transformer-url": "http://mts:1745/transform/form-metadata-to-dataverse-file-v1.xsl",
                         "name": "zenodo-file.json",
                         "dir": ""
                     }

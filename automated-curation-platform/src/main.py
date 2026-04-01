@@ -36,6 +36,7 @@ from akmi_utils import commons as a_commons
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from keycloak import KeycloakOpenID, KeycloakAuthenticationError
+from prometheus_fastapi_instrumentator import Instrumentator
 from starlette import status
 from starlette.middleware.cors import CORSMiddleware
 
@@ -83,7 +84,20 @@ api_keys = [app_settings.ACP_SERVICE_API_KEY]
 security = HTTPBearer()
 
 APP_NAME = os.environ.get("APP_NAME", project_details['title'])
-EXPOSE_PORT = os.environ.get("EXPOSE_PORT", 10124)
+
+
+def get_env_int(name: str, default: int) -> int:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        logging.warning("Invalid %s=%r. Falling back to %d.", name, value, default)
+        return default
+
+
+EXPOSE_PORT = get_env_int("EXPOSE_PORT", 10124)
 OTLP_GRPC_ENDPOINT = os.environ.get("OTLP_GRPC_ENDPOINT", "http://localhost:4317")
 
 def auth_header(request: Request, auth_cred: Annotated[HTTPAuthorizationCredentials, Depends(security)]):
@@ -141,6 +155,7 @@ app = FastAPI(
     version=os.environ.get("acp_version", "unknown"),
     lifespan=lifespan
 )
+Instrumentator().instrument(app).expose(app, include_in_schema=False, endpoint="/metrics")
 
 LOG_FILE = app_settings.LOG_FILE
 log_config = uvicorn.config.LOGGING_CONFIG

@@ -6,7 +6,6 @@ otlp_enable = false
 #db_dialect="sqlite"
 db_dialect="postgresql+psycopg2"
 #db_url = "@format ///{env[BASE_DIR]}/data/db"
-db_url = "acp:2004asinnuriahK12Amal10@localhost:5432"
 data_db_file = "sqlite:{@format {env[BASE_DIR]}/data/db/acp.db}"
 data_tmp_base_dir = "@format {env[BASE_DIR]}/data/tmp"
 data_tmp_base_tus_files_dir = "@format {env[BASE_DIR]}/data/tmp/tus-files"

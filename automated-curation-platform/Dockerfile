@@ -28,9 +28,10 @@ RUN python -m pip install --no-cache-dir --upgrade pip setuptools wheel && \
 
 # Create and activate virtual environment
 RUN python -m venv .venv
-ENV APP_NAME="Repository Asistant Service"
+ENV APP_NAME="Automated Curation Platform"
 ENV PATH="/home/akmi/acp/.venv/bin:$PATH"
 # Copy the application into the container.
+RUN mkdir -p conf && touch conf/.secrets.toml
 COPY src ./src
 COPY resources ./resources
 COPY pyproject.toml .
@@ -38,8 +39,6 @@ COPY README.md .
 COPY uv.lock .
 RUN chmod +x ${BASE_DIR}/resources/utils/ingest.sh
 
-RUN uv venv .venv
-# Install dependencies
 
 RUN uv sync --frozen --no-cache
 

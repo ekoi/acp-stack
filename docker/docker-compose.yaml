@@ -1,0 +1,57 @@
+services:
+  acp:
+    image: ekoindarto/acp:0.3.3-amd64
+    container_name: acp
+    environment:
+      - EXPOSE_PORT=10124
+      - APP_NAME=Repository Assistant Service
+      - PYTHONPATH=/home/akmi/acp/src
+      - BASE_DIR=/home/akmi/acp
+    ports:
+      - "10124:10124"
+    volumes:
+      - ./src:/home/akmi/acp/src
+      - ./data:/home/akmi/acp/data
+      - ./logs:/home/akmi/acp/logs
+      - ./conf:/home/akmi/acp/conf:ro
+      - ./resources:/home/akmi/acp/resources:ro
+    networks:
+      - acp-network
+    depends_on:
+      - acp_postgres
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10124/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  acp_postgres:
+    image: postgres:16
+    restart: unless-stopped
+    container_name: acp_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=acp
+      - POSTGRES_PASSWORD=2004asinnuriahK12Amal10
+      - POSTGRES_DB=acp_db
+    volumes:
+      - ./data/db/acp-postgres:/var/lib/postgresql/data
+    networks:
+      - acp-network
+
+  maildev:
+    image: maildev/maildev:latest
+    container_name: acp_maildev
+    ports:
+      - "1080:1080"   # Web UI
+      - "1025:1025"   # SMTP
+    networks:
+      - acp-network
+    restart: unless-stopped
+
+networks:
+  acp-network:
+    name: acp-network

@@ -68,7 +68,7 @@ async def get_repo_advices(submitted_repo_data: Request):
     logging.debug(f"repo_advice: {repo_advice.model_dump_json(by_alias=True)}")
     transformer_headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {app_settings.DANS_TRANSFORMER_SERVICE_API_KEY}",
+        "Authorization": f"Bearer {app_settings.METADATA_TRANSFORMER_SERVICE_API_KEY}",
     }
     narcis_domain_req = requests.post(
         app_settings.transformer_url,

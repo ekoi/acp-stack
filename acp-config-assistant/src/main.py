@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from keycloak import KeycloakOpenID, KeycloakAuthenticationError
+from prometheus_fastapi_instrumentator import Instrumentator
 from starlette import status
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
@@ -81,6 +82,7 @@ app = FastAPI(
     version=f"{project_details['version']} (Build Date: {build_date})",
     lifespan=lifespan
 )
+Instrumentator().instrument(app).expose(app, include_in_schema=False, endpoint="/metrics")
 
 LOG_FILE = app_settings.LOG_FILE
 log_config = uvicorn.config.LOGGING_CONFIG

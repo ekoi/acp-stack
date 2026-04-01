@@ -32,13 +32,12 @@ RUN python -m venv .venv
 ENV APP_NAME="Repository Asistant Service"
 ENV PATH="/home/akmi/aca/.venv/bin:$PATH"
 # Copy the application into the container.
+RUN mkdir -p conf && touch conf/.secrets.toml
 COPY src ./src
 COPY pyproject.toml .
 COPY README.md .
 COPY uv.lock .
 
-RUN uv venv .venv
-# Install dependencies
 
 RUN uv sync --frozen --no-cache && chown -R akmi:akmi ${BASE_DIR}
 USER akmi

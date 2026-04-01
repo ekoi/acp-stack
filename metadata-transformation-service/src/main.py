@@ -12,6 +12,7 @@ from akmi_utils import commons as a_commons
 from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from prometheus_fastapi_instrumentator import Instrumentator
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 from src.mts import protected, public
@@ -58,6 +59,7 @@ app = FastAPI(
     version=f"{project_details['version']} (Build Date: {build_date})",
     lifespan=lifespan
 )
+Instrumentator().instrument(app).expose(app, include_in_schema=False, endpoint="/metrics")
 
 
 LOG_FILE = settings.LOG_FILE
