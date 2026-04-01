@@ -88,6 +88,9 @@ The stack includes a [Locust](https://locust.io/) container for load/stress test
 
 Each class uses a random wait time between **0.5 – 2 s** between requests, and individual endpoints are weighted with Locust `@task` weights.
 
+> **Why absolute URLs?**  
+> Locust's web UI has a single *Host* field that, when filled in, overrides the `host` attribute of **all** user classes — causing only the matching service to receive traffic. To avoid this, every task uses a fully-qualified URL built from module-level constants (`ACA`, `MTS`, `ACP`) resolved from environment variables at startup. Locust's HTTP client passes absolute URLs through as-is, so all three services are tested simultaneously and the web UI *Host* field is ignored.
+
 ### Locust container
 
 The `locust` service in `docker-compose-full-stack.yaml` starts automatically **after** `acp`, `aca`, and `mts` are healthy. Key settings:
@@ -100,7 +103,7 @@ locust:
     - "8089:8089"   # Locust web UI
   volumes:
     - ./locustfile.py:/mnt/locust/locustfile.py:ro
-  command: -f /mnt/locust/locustfile.py
+  command: -f /mnt/locust/locustfile.py --users 3 --spawn-rate 1 --autostart
   environment:
     ACA_HOST: "http://aca:2810"
     MTS_HOST: "http://mts:1745"
@@ -119,7 +122,9 @@ locust:
    docker compose -f docker-compose-full-stack.yaml up -d --build
    ```
 2. Open the Locust web UI at **`http://localhost:8089`**.
-3. Set the number of users, spawn rate, and click **Start swarming**.
+3. Swarming starts automatically with defaults from compose (`--users 3 --spawn-rate 1 --autostart`).
+4. The *Host* field can be ignored; requests still go to `aca`, `mts`, and `acp` via absolute URLs in `docker/locustfile.py`.
+5. If you stop the run in the UI, use **Start** to begin again with your preferred values.
 
 #### Option B — Headless / CI mode
 
@@ -175,4 +180,3 @@ Use these links after the full stack is running:
 Default Grafana credentials (from compose):
 - username: `admin`
 - password: `admin1`
-

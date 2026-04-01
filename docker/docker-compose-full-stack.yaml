@@ -223,7 +223,7 @@ services:
       - "8089:8089"   # Locust web UI
     volumes:
       - ./locustfile.py:/mnt/locust/locustfile.py:ro
-    command: -f /mnt/locust/locustfile.py
+    command: -f /mnt/locust/locustfile.py --users 3 --spawn-rate 1 --autostart
     environment:
       ACA_HOST: "http://aca:2810"
       MTS_HOST: "http://mts:1745"
