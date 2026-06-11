@@ -9,7 +9,7 @@ Core services:
 - `aca` (`acp_config_assistant`) - config assistant service (`http://localhost:2810`)
 - `mts` (`metadata_transformation_service`) - metadata transformer service (`http://localhost:1745`)
 - `keycloak` (`acp_keycloak`) - local identity provider for auth flows (`http://localhost:8080`)
-- `acp_postgres` - PostgreSQL for ACP (`localhost:5433`)
+- `acp_postgres` - PostgreSQL for ACP (`localhost:5434`)
 - `maildev` - local SMTP + UI (`http://localhost:1080`, SMTP `localhost:1025`)
 
 Observability services:
@@ -173,7 +173,7 @@ The environment variables `ACA_HOST`, `MTS_HOST`, and `ACP_HOST` default to the 
 This repository uses its own Docker network so it does not mix with `mac-mini-infra`:
 
 - network name: `acp-stack-network`
-- Postgres host port: `5433`
+- Postgres host port: `5434`
 - Compose project name: `acp-stack`
 
 If you already have another service using `5432` on the Mac mini, this stack will now stay out of the way.

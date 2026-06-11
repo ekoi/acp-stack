@@ -110,7 +110,7 @@ services:
     restart: unless-stopped
     container_name: acp_postgres
     ports:
-      - "5433:5432"
+      - "5434:5432"
     environment:
       - POSTGRES_USER=acp
       - POSTGRES_PASSWORD=akmi2004
