@@ -17,7 +17,7 @@ concurrency:
 jobs:
   validate:
     name: Validate compose and repo layout
-    runs-on: [self-hosted, macOS, ARM64, acp-stack]
+    runs-on: [self-hosted, macOS, X64, acp-stack]
 
     steps:
       - name: Checkout
@@ -41,7 +41,7 @@ jobs:
 
   build-images:
     name: Build service images
-    runs-on: [self-hosted, macOS, ARM64, acp-stack]
+    runs-on: [self-hosted, macOS, X64, acp-stack]
     needs: validate
 
     steps:

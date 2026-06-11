@@ -168,6 +168,78 @@ The environment variables `ACA_HOST`, `MTS_HOST`, and `ACP_HOST` default to the 
   - https://github.com/DANS-KNAW/dans-frontend-framework
 - After first startup, open Grafana at `http://localhost:3000`.
 
+## GitHub Actions runner setup on the Mac mini
+
+To let GitHub Actions pick up the `CI` and `Deploy` jobs for this repo, register a **self-hosted runner** on the Mac mini with these labels:
+
+- `self-hosted`
+- `macOS`
+- `X64`
+- `acp-stack`
+
+### 1) Create a runner directory
+
+```bash
+mkdir -p /Users/akmi/actions-runner
+cd /Users/akmi/actions-runner
+```
+
+### 2) Download the runner
+
+Choose the archive that matches the Mac mini CPU:
+
+```bash
+# Intel / x64
+curl -o actions-runner-osx-x64.tar.gz -L \
+  https://github.com/actions/runner/releases/download/v2.323.0/actions-runner-osx-x64-2.323.0.tar.gz
+```
+
+Extract the archive you downloaded:
+
+```bash
+tar xzf actions-runner-*.tar.gz
+```
+
+### 3) Configure the runner
+
+Create a GitHub repository registration token from:
+
+- `https://github.com/ekoi/acp-stack/settings/actions/runners/new`
+
+Then configure the runner:
+
+```bash
+cd /Users/akmi/actions-runner
+./config.sh \
+  --url https://github.com/ekoi/acp-stack \
+  --token YOUR_REGISTRATION_TOKEN \
+  --name mac-mini-acp-stack \
+  --labels self-hosted,macOS,X64,acp-stack \
+  --unattended
+```
+
+
+### 4) Install and start the runner as a service
+
+```bash
+cd /Users/akmi/actions-runner
+sudo ./svc.sh install
+sudo ./svc.sh start
+```
+
+### 5) Verify the runner
+
+You should see the runner appear online in GitHub under:
+
+```text
+https://github.com/ekoi/acp-stack/settings/actions/runners
+```
+
+If the runner is online with the labels above, it can pick up:
+
+- `.github/workflows/ci.yml`
+- `.github/workflows/deploy.yml`
+
 ## Grafana dashboard links
 
 Use these links after the full stack is running:
