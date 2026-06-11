@@ -13,7 +13,7 @@ services:
       - ./logs:/home/akmi/mts/logs
       - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
     networks:
-      - acp-network
+      - acp-stack-network
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:1745/info"]
       interval: 10s
@@ -40,7 +40,7 @@ services:
       - ./logs:/home/akmi/aca/logs
       - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
     networks:
-      - acp-network
+      - acp-stack-network
     depends_on:
       mts:
         condition: service_healthy
@@ -84,7 +84,7 @@ services:
       - ./logs:/home/akmi/acp/logs
       - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
     networks:
-      - acp-network
+      - acp-stack-network
     depends_on:
       acp_postgres:
         condition: service_healthy
@@ -110,7 +110,7 @@ services:
     restart: unless-stopped
     container_name: acp_postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       - POSTGRES_USER=acp
       - POSTGRES_PASSWORD=akmi2004
@@ -124,7 +124,7 @@ services:
       retries: 10
       start_period: 20s
     networks:
-      - acp-network
+      - acp-stack-network
 
   loki:
     image: grafana/loki:3.3.2
@@ -135,7 +135,7 @@ services:
     volumes:
       - acp-data:/shared
     networks:
-      - acp-network
+      - acp-stack-network
 
   prometheus:
     image: prom/prometheus:v3.0.1
@@ -152,7 +152,7 @@ services:
     depends_on:
       - loki
     networks:
-      - acp-network
+      - acp-stack-network
 
   tempo:
     image: grafana/tempo:2.6.1-amd64
@@ -167,7 +167,7 @@ services:
     depends_on:
       - loki
     networks:
-      - acp-network
+      - acp-stack-network
 
   promtail:
     image: grafana/promtail:3.3.2
@@ -183,7 +183,7 @@ services:
       - mts
       - acp
     networks:
-      - acp-network
+      - acp-stack-network
 
   grafana:
     image: grafana/grafana:11.4.0
@@ -204,7 +204,7 @@ services:
       - tempo
       - promtail
     networks:
-      - acp-network
+      - acp-stack-network
 
   maildev:
     image: maildev/maildev:latest
@@ -213,7 +213,7 @@ services:
       - "1080:1080"   # Web UI
       - "1025:1025"   # SMTP
     networks:
-      - acp-network
+      - acp-stack-network
     restart: unless-stopped
 
   locust:
@@ -236,12 +236,12 @@ services:
       mts:
         condition: service_healthy
     networks:
-      - acp-network
+      - acp-stack-network
 #    restart: unless-stopped
 
 networks:
-  acp-network:
-    name: acp-network
+  acp-stack-network:
+    name: acp-stack-network
 
 volumes:
   acp-data:

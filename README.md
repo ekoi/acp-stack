@@ -9,7 +9,7 @@ Core services:
 - `aca` (`acp_config_assistant`) - config assistant service (`http://localhost:2810`)
 - `mts` (`metadata_transformation_service`) - metadata transformer service (`http://localhost:1745`)
 - `keycloak` (`acp_keycloak`) - local identity provider for auth flows (`http://localhost:8080`)
-- `acp_postgres` - PostgreSQL for ACP (`localhost:5432`)
+- `acp_postgres` - PostgreSQL for ACP (`localhost:5433`)
 - `maildev` - local SMTP + UI (`http://localhost:1080`, SMTP `localhost:1025`)
 
 Observability services:
@@ -26,50 +26,50 @@ Use `docker/docker-compose-full-stack.yaml` to run all services.
 ### 1) Start full stack
 
 ```bash
-cd /Users/akmi/dev/work/dans/acp-stack/docker
-docker compose -f docker-compose-full-stack.yaml up -d --build
+cd /Users/akmi/dev/speeltuin/acp-stack/docker
+docker compose -p acp-stack -f docker-compose-full-stack.yaml up -d --build
 ```
 
 ### 2) Check running services
 
 ```bash
-cd /Users/akmi/dev/work/dans/acp-stack/docker
-docker compose -f docker-compose-full-stack.yaml ps
+cd /Users/akmi/dev/speeltuin/acp-stack/docker
+docker compose -p acp-stack -f docker-compose-full-stack.yaml ps
 ```
 
 ### 3) Follow logs
 
 ```bash
-cd /Users/akmi/dev/work/dans/acp-stack/docker
-docker compose -f docker-compose-full-stack.yaml logs -f
+cd /Users/akmi/dev/speeltuin/acp-stack/docker
+docker compose -p acp-stack -f docker-compose-full-stack.yaml logs -f
 ```
 
 Single service logs example:
 
 ```bash
-cd /Users/akmi/dev/work/dans/acp-stack/docker
-docker compose -f docker-compose-full-stack.yaml logs -f acp
+cd /Users/akmi/dev/speeltuin/acp-stack/docker
+docker compose -p acp-stack -f docker-compose-full-stack.yaml logs -f acp
 ```
 
 ### 4) Restart a service
 
 ```bash
-cd /Users/akmi/dev/work/dans/acp-stack/docker
-docker compose -f docker-compose-full-stack.yaml restart acp
+cd /Users/akmi/dev/speeltuin/acp-stack/docker
+docker compose -p acp-stack -f docker-compose-full-stack.yaml restart acp
 ```
 
 ### 5) Stop full stack
 
 ```bash
-cd /Users/akmi/dev/work/dans/acp-stack/docker
-docker compose -f docker-compose-full-stack.yaml down
+cd /Users/akmi/dev/speeltuin/acp-stack/docker
+docker compose -p acp-stack -f docker-compose-full-stack.yaml down
 ```
 
 ### 6) Stop full stack and remove volumes (clean reset)
 
 ```bash
-cd /Users/akmi/dev/work/dans/acp-stack/docker
-docker compose -f docker-compose-full-stack.yaml down -v
+cd /Users/akmi/dev/speeltuin/acp-stack/docker
+docker compose -p acp-stack -f docker-compose-full-stack.yaml down -v
 ```
 
 ## Load testing with Locust
@@ -118,8 +118,8 @@ locust:
 
 1. Start the full stack (Locust starts together with it):
    ```bash
-   cd /Users/akmi/dev/work/dans/acp-stack/docker
-   docker compose -f docker-compose-full-stack.yaml up -d --build
+   cd /Users/akmi/dev/speeltuin/acp-stack/docker
+   docker compose -p acp-stack -f docker-compose-full-stack.yaml up -d --build
    ```
 2. Open the Locust web UI at **`http://localhost:8089`**.
 3. Swarming starts automatically with defaults from compose (`--users 3 --spawn-rate 1 --autostart`).
@@ -131,8 +131,8 @@ locust:
 Run Locust without the web UI by overriding the command:
 
 ```bash
-cd /Users/akmi/dev/work/dans/acp-stack/docker
-docker compose -f docker-compose-full-stack.yaml run --rm locust \
+cd /Users/akmi/dev/speeltuin/acp-stack/docker
+docker compose -p acp-stack -f docker-compose-full-stack.yaml run --rm locust \
   -f /mnt/locust/locustfile.py \
   --headless \
   --users 50 \
@@ -167,6 +167,16 @@ The environment variables `ACA_HOST`, `MTS_HOST`, and `ACP_HOST` default to the 
 - `keycloak` can be used in combination with `dans-frontend-framework` for local authentication integration:
   - https://github.com/DANS-KNAW/dans-frontend-framework
 - After first startup, open Grafana at `http://localhost:3000`.
+
+## Docker network and ports
+
+This repository uses its own Docker network so it does not mix with `mac-mini-infra`:
+
+- network name: `acp-stack-network`
+- Postgres host port: `5433`
+- Compose project name: `acp-stack`
+
+If you already have another service using `5432` on the Mac mini, this stack will now stay out of the way.
 
 ## GitHub Actions runner setup on the Mac mini
 
