@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-acp-stack-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate compose and repo layout
+    runs-on: [self-hosted, macOS, ARM64, acp-stack]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Docker versions
+        run: |
+          docker version
+          docker compose version
+
+      - name: Validate docker compose file
+        run: docker compose -f docker/docker-compose-full-stack.yaml config -q
+
+      - name: Check required paths
+        run: |
+          test -f docker/docker-compose-full-stack.yaml
+          test -f docker/locustfile.py
+          test -f automated-curation-platform/Dockerfile
+          test -f acp-config-assistant/Dockerfile
+          test -f metadata-transformation-service/Dockerfile
+
+  build-images:
+    name: Build service images
+    runs-on: [self-hosted, macOS, ARM64, acp-stack]
+    needs: validate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build ACP image
+        run: docker build -t acp-stack/acp:${{ github.sha }} automated-curation-platform
+
+      - name: Build ACA image
+        run: docker build -t acp-stack/aca:${{ github.sha }} acp-config-assistant
+
+      - name: Build MTS image
+        run: docker build -t acp-stack/mts:${{ github.sha }} metadata-transformation-service
+
