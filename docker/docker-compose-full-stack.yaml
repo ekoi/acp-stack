@@ -222,7 +222,9 @@ services:
       - traefik.enable=true
       - traefik.docker.network=traefik-network
       - traefik.http.routers.grafana.rule=Host(`metrics.milibening.id`)
+      - traefik.http.routers.grafana.priority=100
       - traefik.http.routers.grafana.entrypoints=websecure
+      - traefik.http.routers.grafana.tls=true
       - traefik.http.routers.grafana.tls.certresolver=letsencrypt
       - traefik.http.services.grafana.loadbalancer.server.port=3000
 
