@@ -31,6 +31,7 @@ services:
       - traefik.http.routers.mts.entrypoints=websecure
       - traefik.http.routers.mts.tls.certresolver=letsencrypt
       - traefik.http.services.mts.loadbalancer.server.port=1745
+      - traefik.http.middlewares.mts-headers.headers.customrequestheaders.X-Forwarded-Proto=https
     command: >
       sh -c 'sh /usr/local/bin/bootstrap-secrets.sh mts /home/akmi/mts/conf && exec python -m src.main'
 
