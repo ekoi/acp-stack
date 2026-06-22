@@ -57,7 +57,9 @@ app = FastAPI(
     title=project_details['title'],
     description=project_details['description'],
     version=f"{project_details['version']} (Build Date: {build_date})",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/docs",
+    openapi_url="/openapi.json"
 )
 Instrumentator().instrument(app).expose(app, include_in_schema=False, endpoint="/metrics")
 
