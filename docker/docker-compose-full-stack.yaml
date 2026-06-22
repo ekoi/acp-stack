@@ -202,6 +202,9 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin1
+      - GF_SERVER_ROOT_URL=https://metrics.milibening.id
+      - GF_SERVER_CERT_FILE=
+      - GF_SERVER_CERT_KEY=
     volumes:
       - acp-data:/shared
       - ./otlp-resources/monitors/etc/grafana:/etc/grafana/provisioning/datasources
@@ -214,6 +217,14 @@ services:
       - promtail
     networks:
       - acp-stack-network
+      - traefik-network
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-network
+      - traefik.http.routers.grafana.rule=Host(`metrics.milibening.id`)
+      - traefik.http.routers.grafana.entrypoints=websecure
+      - traefik.http.routers.grafana.tls.certresolver=letsencrypt
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
 
   maildev:
     image: maildev/maildev:latest
