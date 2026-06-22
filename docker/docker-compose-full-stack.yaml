@@ -14,6 +14,7 @@ services:
       - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
     networks:
       - acp-stack-network
+      - traefik-network
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:1745/info"]
       interval: 10s
@@ -23,6 +24,13 @@ services:
     environment:
       APP_NAME: "Metadata Transformation Service"
       OTLP_GRPC_ENDPOINT: "http://tempo:4317"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-network
+      - traefik.http.routers.mts.rule=Host(`mts.milibening.id`)
+      - traefik.http.routers.mts.entrypoints=websecure
+      - traefik.http.routers.mts.tls.certresolver=letsencrypt
+      - traefik.http.services.mts.loadbalancer.server.port=1745
     command: >
       sh -c 'sh /usr/local/bin/bootstrap-secrets.sh mts /home/akmi/mts/conf && exec python -m src.main'
 
@@ -242,6 +250,9 @@ services:
 networks:
   acp-stack-network:
     name: acp-stack-network
+  traefik-network:
+    external: true
+    name: traefik-network
 
 volumes:
   acp-data:
