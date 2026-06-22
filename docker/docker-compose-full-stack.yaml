@@ -104,6 +104,7 @@ services:
       - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
     networks:
       - acp-stack-network
+      - traefik-network
     depends_on:
       acp_postgres:
         condition: service_healthy
@@ -120,6 +121,15 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-network
+      - traefik.http.routers.acp.rule=Host(`acp.milibening.id`)
+      - traefik.http.routers.acp.priority=100
+      - traefik.http.routers.acp.entrypoints=websecure
+      - traefik.http.routers.acp.tls=true
+      - traefik.http.routers.acp.tls.certresolver=letsencrypt
+      - traefik.http.services.acp.loadbalancer.server.port=10124
     command: >
       sh -c 'sh /usr/local/bin/bootstrap-secrets.sh acp /home/akmi/acp/conf && exec python -m src.main'
 
