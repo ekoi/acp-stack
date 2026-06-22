@@ -50,6 +50,7 @@ services:
       - ./scripts/bootstrap-secrets.sh:/usr/local/bin/bootstrap-secrets.sh:ro
     networks:
       - acp-stack-network
+      - traefik-network
     depends_on:
       mts:
         condition: service_healthy
@@ -64,6 +65,15 @@ services:
       APP_NAME: "ACP Config Assistant"
       OTLP_GRPC_ENDPOINT: "http://tempo:4317"
       MTS_HOST: "mts"
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-network
+      - traefik.http.routers.aca.rule=Host(`aca.milibening.id`)
+      - traefik.http.routers.aca.priority=100
+      - traefik.http.routers.aca.entrypoints=websecure
+      - traefik.http.routers.aca.tls=true
+      - traefik.http.routers.aca.tls.certresolver=letsencrypt
+      - traefik.http.services.aca.loadbalancer.server.port=2810
     command: >
       sh -c 'sh /usr/local/bin/bootstrap-secrets.sh aca /home/akmi/aca/conf && exec python -m src.main'
 
